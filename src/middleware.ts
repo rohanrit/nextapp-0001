@@ -1,22 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getTokenFromRequest, verifyToken } from './src/lib/betterAuth';
+import { verifyToken } from './lib/betterAuth';
 
 export function middleware(req: NextRequest) {
-  const url = req.nextUrl.clone();
-  if (url.pathname.startsWith('/dashboard')) {
-    const token = getTokenFromRequest(req as any);
-    if (!token) {
-      url.pathname = '/signin';
-      return NextResponse.redirect(url);
-    }
-    try {
-      verifyToken(token);
-      return NextResponse.next();
-    } catch (e) {
-      url.pathname = '/signin';
-      return NextResponse.redirect(url);
-    }
+  if (req.nextUrl.pathname.startsWith('/dashboard')) {
+    const token = req.cookies.get('ba_token')?.value;
+    if (!token) return NextResponse.redirect(new URL('/signin', req.url));
+    try { verifyToken(token); } 
+    catch { return NextResponse.redirect(new URL('/signin', req.url)); }
   }
   return NextResponse.next();
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { connectMongo } from '../../../../lib/mongoose';
-import Pdf from '../../../../models/Pdf';
-import { verifyToken } from '../../../../lib/betterAuth';
+import { connectMongo } from '@/lib/mongoose';
+import Pdf from '@/models/Pdf';
+import { verifyToken } from '@/lib/betterAuth';
 import mongoose from 'mongoose';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -14,10 +14,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const payload = verifyToken(token);
     await connectMongo();
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: 'Invalid PDF ID' }, { status: 400 });
-    }
-
+    if (!mongoose.Types.ObjectId.isValid(params.id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
     const pdf = await Pdf.findById(params.id);
     if (!pdf) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     if (pdf.owner.toString() !== payload.userId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -26,9 +23,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const url = new URL(req.url);
     const download = url.searchParams.get('download') === 'true';
     headers.set('Content-Type', pdf.contentType);
-    headers.set('Content-Disposition', download
-      ? `attachment; filename="${pdf.filename}"`
-      : `inline; filename="${pdf.filename}"`);
+    headers.set('Content-Disposition', download ? `attachment; filename="${pdf.filename}"` : `inline; filename="${pdf.filename}"`);
 
     return new Response(pdf.data, { headers });
   } catch (e) {

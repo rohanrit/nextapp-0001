@@ -1,21 +1,19 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPdf extends Document {
-  owner: mongoose.Types.ObjectId;
   filename: string;
-  data: Buffer;
   contentType: string;
-  size: number;
-  uploadedAt: Date;
+  data: Buffer;
+  owner: mongoose.Types.ObjectId;
+  createdAt: Date;
 }
 
-const PdfSchema = new mongoose.Schema<IPdf>({
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+const PdfSchema: Schema = new Schema({
   filename: { type: String, required: true },
-  data: { type: Buffer, required: true },
   contentType: { type: String, required: true },
-  size: { type: Number, required: true },
-  uploadedAt: { type: Date, default: Date.now },
+  data: { type: Buffer, required: true },
+  owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  createdAt: { type: Date, default: Date.now },
 });
 
 export default mongoose.models.Pdf || mongoose.model<IPdf>('Pdf', PdfSchema);
