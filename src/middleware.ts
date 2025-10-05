@@ -3,13 +3,24 @@ import type { NextRequest } from 'next/server';
 import { verifyToken } from './lib/betterAuth';
 
 export function middleware(req: NextRequest) {
-  if (req.nextUrl.pathname.startsWith('/dashboard')) {
+  const { pathname } = req.nextUrl;
+
+  if (pathname.startsWith('/dashboard')) {
     const token = req.cookies.get('ba_token')?.value;
-    if (!token) return NextResponse.redirect(new URL('/signin', req.url));
-    try { verifyToken(token); } 
-    catch { return NextResponse.redirect(new URL('/signin', req.url)); }
+
+    if (!token) {
+      return NextResponse.redirect(new URL('/signin', req.url));
+    }
+
+    const payload = verifyToken(token);
+    if (!payload?.userId) {
+      return NextResponse.redirect(new URL('/signin', req.url));
+    }
   }
+
   return NextResponse.next();
 }
 
-export const config = { matcher: ['/dashboard/:path*'] };
+export const config = {
+  matcher: ['/dashboard/:path*'],
+};

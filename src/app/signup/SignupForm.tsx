@@ -13,6 +13,7 @@ export default function SignupForm() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     });
+    console.log(res);
     if (res.ok) router.push('/dashboard');
     else alert('Error creating account');
   }

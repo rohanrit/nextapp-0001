@@ -1,18 +1,23 @@
 import { connectMongo } from '../../lib/mongoose';
-import Pdf from '../../models/Pdf';
-import { getTokenFromRequest, verifyToken } from '../../lib/betterAuth';
+import { verifyToken } from '../../lib/betterAuth';
 import { cookies } from 'next/headers';
 import UploadForm from './UploadForm';
+import Navbar from '../../components/Navbar';
 
 export default async function DashboardPage() {
-  // auth - read cookie from headers via next/headers
   const cookieStore = cookies();
   const token = cookieStore.get('ba_token')?.value;
+
   if (!token) {
     return (
-      <div className='p-6 bg-white rounded shadow'>
-        <h2 className='text-xl'>Not authenticated</h2>
-        <p>Please <a href='/signin' className='text-blue-600'>sign in</a>.</p>
+      <div>
+        <Navbar />
+        <div className="p-6 bg-white rounded shadow mt-6">
+          <h2 className="text-xl font-semibold">Not authenticated</h2>
+          <p>
+            Please <a href="/signin" className="text-blue-600 underline">sign in</a>.
+          </p>
+        </div>
       </div>
     );
   }
@@ -20,24 +25,27 @@ export default async function DashboardPage() {
   try {
     const payload = verifyToken(token);
     await connectMongo();
-    const pdfs = await Pdf.find({ owner: payload.userId }).select('-data').sort('-uploadedAt').lean();
+
     return (
       <div>
-        <h1 className='text-2xl mb-4'>Dashboard</h1>
-        <UploadForm />
-        <h2 className='text-xl mt-6 mb-2'>Your PDFs</h2>
-        <ul className='space-y-2'>
-          {pdfs.map((p: any) => (
-            <li key={p._id} className='border p-2 rounded bg-white'>{p.filename} — {new Date(p.uploadedAt).toLocaleString()}</li>
-          ))}
-        </ul>
+        <Navbar />
+        <main className="p-6">
+          <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+          <UploadForm />
+        </main>
       </div>
     );
-  } catch (e) {
+  } catch (error) {
+    console.error('Dashboard error:', error);
     return (
-      <div className='p-6 bg-white rounded shadow'>
-        <h2 className='text-xl'>Invalid session</h2>
-        <p>Please <a href='/signin' className='text-blue-600'>sign in</a> again.</p>
+      <div>
+        <Navbar />
+        <div className="p-6 bg-white rounded shadow mt-6">
+          <h2 className="text-xl font-semibold">Invalid session</h2>
+          <p>
+            Please <a href="/signin" className="text-blue-600 underline">sign in</a> again.
+          </p>
+        </div>
       </div>
     );
   }

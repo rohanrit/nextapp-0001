@@ -7,18 +7,14 @@ if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
 }
 
-// Extend global object to avoid TypeScript errors
-declare global {
-  var mongoose: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
-}
-
-let cached = global.mongoose;
+// Use a global variable to cache the connection across hot reloads in development
+let cached = (global as any).mongoose;
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+  cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
-async function dbConnect(): Promise<typeof mongoose> {
+async function connectMongo(): Promise<typeof mongoose> {
   if (cached.conn) {
     return cached.conn;
   }
@@ -28,23 +24,17 @@ async function dbConnect(): Promise<typeof mongoose> {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
       console.log('✅ MongoDB connected');
-      return mongoose;
+      return mongooseInstance;
     }).catch((error) => {
       console.error('❌ MongoDB connection error:', error);
       throw error;
     });
   }
 
-  try {
-    cached.conn = await cached.promise;
-  } catch (error) {
-    cached.promise = null;
-    throw error;
-  }
-
+  cached.conn = await cached.promise;
   return cached.conn;
 }
 
-export default dbConnect;
+export { connectMongo };
