@@ -1,11 +1,11 @@
+import { cookies } from 'next/headers';
 import { connectMongo } from '../../lib/mongoose';
 import { verifyToken } from '../../lib/betterAuth';
-import { cookies } from 'next/headers';
 import UploadForm from './UploadForm';
 import Navbar from '../../components/Navbar';
 
 export default async function DashboardPage() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get('ba_token')?.value;
 
   if (!token) {
@@ -28,7 +28,6 @@ export default async function DashboardPage() {
 
     return (
       <div>
-        <Navbar />
         <main className="p-6">
           <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
           <UploadForm />

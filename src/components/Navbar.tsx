@@ -9,9 +9,22 @@ export default function Navbar() {
   const router = useRouter();
 
   useEffect(() => {
-    const hasToken = document.cookie.includes('ba_token=');
-    setIsLoggedIn(hasToken);
-  }, []);
+    const checkAuth = () => {
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      const tokenCookie = cookies.find(c => c.startsWith('ba_token='));
+      setIsLoggedIn(!!tokenCookie);
+    };
+
+    checkAuth();
+
+    // Re-check when route changes (e.g., after login redirect)
+    const handleRouteChange = () => checkAuth();
+    router.events?.on?.('routeChangeComplete', handleRouteChange);
+
+    return () => {
+      router.events?.off?.('routeChangeComplete', handleRouteChange);
+    };
+  }, [router]);
 
   const handleLogout = () => {
     document.cookie = 'ba_token=; Path=/; Max-Age=0;';
@@ -30,7 +43,10 @@ export default function Navbar() {
             <Link href="/signup">Sign Up</Link>
           </>
         ) : (
-          <button onClick={handleLogout} className="text-red-600 hover:underline">
+          <button
+            onClick={handleLogout}
+            className="text-red-600 hover:underline"
+          >
             Logout
           </button>
         )}
